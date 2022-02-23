@@ -1,2 +1,4 @@
 .vscode/
 .idea/
+catboost_info/
+__pycache__/
