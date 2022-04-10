@@ -1,8 +1,1 @@
-train_identity.csv
-train_transaction.csv
-test_identity.csv
-test_transaction.csv
-train.csv
-test.csv
-df_train.csv
-df_validation.csv
+*.csv
