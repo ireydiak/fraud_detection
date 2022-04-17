@@ -19,5 +19,5 @@ def f1score(y_true: np.ndarray, y_pred: np.ndarray, pos_label: int = 0):
     return (2 * prec * rec) / (rec + prec)
 
 
-def precision_recall_f1(y_true: np.ndarray, y_pred: np.ndarray, pos_label: int = 0):
+def precision_recall_f1score(y_true: np.ndarray, y_pred: np.ndarray, pos_label: int = 0):
     return precision(y_true, y_pred, pos_label), recall(y_true, y_pred, pos_label), f1score(y_true, y_pred, pos_label)

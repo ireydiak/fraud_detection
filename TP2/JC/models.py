@@ -2,11 +2,9 @@ import os
 from collections import deque
 
 import pandas as pd
-from sklearn import metrics as sk_metrics
 
 from torch import nn, optim
 from tqdm import tqdm
-import sklearn.metrics as sk_metrics
 from datetime import datetime as dt
 import numpy as np
 import torch
@@ -15,6 +13,7 @@ from torch.utils.data import Dataset, Subset, DataLoader
 from torch.utils.data.dataset import T_co
 from typing import Tuple
 from sklearn.model_selection import train_test_split
+import metrics
 
 
 class InstaCartDataset(Dataset):
@@ -178,8 +177,8 @@ class MLPTrainer:
     def evaluate(self, y_true, y_pred, pos_label=0) -> dict:
         res = {"Precision": -1, "Recall": -1, "F1-Score": -1}
 
-        res["Precision"], res["Recall"], res["F1-Score"], _ = sk_metrics.precision_recall_fscore_support(
-            y_true, y_pred, average='binary', pos_label=pos_label
+        res["Precision"], res["Recall"], res["F1-Score"] = metrics.precision_recall_f1score(
+            y_true, y_pred, pos_label=pos_label
         )
 
         return res
@@ -257,7 +256,15 @@ def train(model_cls, lr, batch_size, n_epochs, class_of_interest):
 
 
 def dict_product(dicts):
-    # TODO cité la source
+    """
+    Copied from https://stackoverflow.com/questions/5228158/cartesian-product-of-a-dictionary-of-lists
+
+    # >>> list(dict_product(dict(number=[1,2], character='ab')))
+    [{'character': 'a', 'number': 1},
+    {'character': 'a', 'number': 2},
+    {'character': 'b', 'number': 1},
+    {'character': 'b', 'number': 2}]
+    """
     return (dict(zip(dicts, x)) for x in it.product(*dicts.values()))
 
 
