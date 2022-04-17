@@ -219,7 +219,7 @@ class MLPTrainer:
                     t.update()
 
 
-def train_once(X, class_ratio, model_cls, n_epochs, lr, batch_size):
+def train_once(X, class_ratio, model_cls, n_epochs, lr, batch_size, class_of_interest):
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     # Partition des données aléatoires à chaque itération
@@ -232,10 +232,10 @@ def train_once(X, class_ratio, model_cls, n_epochs, lr, batch_size):
     trainer.train(train_ldr, n_epochs)
     # Évaluation
     y_true, y_pred = trainer.test(test_ldr)
-    return trainer.evaluate(y_true, y_pred)
+    return trainer.evaluate(y_true, y_pred, pos_label=class_of_interest)
 
 
-def train(model_cls, lr, batch_size, n_epochs):
+def train(model_cls, lr, batch_size, n_epochs, class_of_interest):
     df = pd.read_csv("./data/train_orders.csv")
     X = df.to_numpy()
     cls_0_ratio = (X[:, -1] == 0).sum() / len(X)
@@ -249,7 +249,7 @@ def train(model_cls, lr, batch_size, n_epochs):
                                                                    "lr={}, batch_size={}".format(lr, batch_size),
                                                                    n_runs))
     for run in range(n_runs):
-        run_results = train_once(X, class_ratio, model_cls, n_epochs, lr, batch_size)
+        run_results = train_once(X, class_ratio, model_cls, n_epochs, lr, batch_size, class_of_interest)
         for metric_name in available_metrics:
             results[metric_name].append(run_results[metric_name])
 
@@ -261,7 +261,7 @@ def dict_product(dicts):
     return (dict(zip(dicts, x)) for x in it.product(*dicts.values()))
 
 
-def hyperparameter_search(model_cls, n_epochs):
+def hyperparameter_search(model_cls, n_epochs, class_of_interest):
     tunable_params = deque(dict_product({"lr": [1e-3, 5e-2, 1e-2], "batch_size": [32, 64, 128]}))
 
     df = pd.read_csv("./data/train_orders.csv")
@@ -280,7 +280,8 @@ def hyperparameter_search(model_cls, n_epochs):
             class_ratio=None,
             model_cls=model_cls,
             n_epochs=n_epochs,
-            lr=p.get("lr"), batch_size=p.get("batch_size")
+            lr=p.get("lr"), batch_size=p.get("batch_size"),
+            class_of_interest=class_of_interest
         )
         f1 = results["F1-Score"]
         print("... got F1-Score={:2.4f}".format(f1))
@@ -299,13 +300,14 @@ if __name__ == "__main__":
 
     for model_class in available_models:
         # Recherche d'hyperparamètres
-        _, optim_params = hyperparameter_search(model_cls=model_class, n_epochs=10)
+        _, optim_params = hyperparameter_search(model_cls=model_class, n_epochs=10, class_of_interest=1)
         # Entraînement sur les paramètres optimaux trouvés
         model_res = train(
             model_cls=model_class,
             lr=optim_params["lr"],
             batch_size=optim_params["batch_size"],
             n_epochs=100,
+            class_of_interest=1
         )
         # Sauvegarde les résultats et les hyper-paramètres
         all_results[model_class.name] = {"Results": model_res, "Params": optim_params}
