@@ -1,23 +1,16 @@
-import numpy as np
-import sklearn.model_selection
-import torch
-from torch import nn, optim
-from tqdm import tqdm
-from torch.utils.data import Dataset, Subset, DataLoader
-from torch.utils.data.dataset import T_co
-from typing import Tuple
-from sklearn.model_selection import train_test_split
+import os
+from collections import deque
+
 import pandas as pd
-from collections import defaultdict
 from sklearn import metrics as sk_metrics
-from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler, Sampler, Subset
 
 from torch import nn, optim
 from tqdm import tqdm
 import sklearn.metrics as sk_metrics
-
+from datetime import datetime as dt
 import numpy as np
 import torch
+import itertools as it
 from torch.utils.data import Dataset, Subset, DataLoader
 from torch.utils.data.dataset import T_co
 from typing import Tuple
@@ -25,11 +18,16 @@ from sklearn.model_selection import train_test_split
 
 
 class InstaCartDataset(Dataset):
-    def __init__(self, data: np.array, val_ratio: float = 0.1, test_ratio: float = 0.33, batch_size: int = 32,
-                 class_ratio=None):
+    def __init__(
+            self,
+            data: np.array,
+            val_ratio: float = 0.1,
+            test_ratio: float = 0.33,
+            batch_size: int = 32,
+            class_ratio=None
+    ):
         self.name = self.__class__.__name__
-        # self.X = data[:, :-1]
-        # self.y = data[:, -1]
+        self.class_ratio = class_ratio
         self.X = data
         self.val_ratio = val_ratio
         self.test_ratio = test_ratio
@@ -44,7 +42,7 @@ class InstaCartDataset(Dataset):
     def __getitem__(self, index) -> T_co:
         return self.X[index], self.y[index]
 
-    def loaders(self, num_workers: int = 4, seed: int = None) -> Tuple[DataLoader, DataLoader]:
+    def loaders(self, num_workers: int = 4) -> Tuple[DataLoader, DataLoader]:
         X_train, X_test = train_test_split(self.X, test_size=self.test_ratio)
         train_ldr = DataLoader(dataset=X_train, batch_size=self.batch_size, num_workers=num_workers)
         test_ldr = DataLoader(dataset=X_test, batch_size=self.batch_size, num_workers=num_workers)
@@ -150,11 +148,12 @@ class MLP2(nn.Module):
 
 
 class MLPTrainer:
-    def __init__(self, model, optimizer, device: str = "cuda"):
+    def __init__(self, model, optimizer, device: str = "cuda", verbose: bool = True):
         self.model = model.to(device)
         self.device = device
         self.optimizer = optimizer
         self.loss_fn = nn.BCEWithLogitsLoss()
+        self.verbose = verbose
 
     def test(self, dataset):
         self.model.eval()
@@ -186,12 +185,6 @@ class MLPTrainer:
         return res
 
     def train(self, dataset_ldr, num_epochs):
-        """
-        Train the model for num_epochs times
-        Args:
-            num_epochs: number times to train the model
-        """
-
         # Create pytorch's train data_loader
         train_loader = dataset_ldr
 
@@ -199,7 +192,7 @@ class MLPTrainer:
         for epoch in range(num_epochs):
             print("Epoch: {} of {}".format(epoch + 1, num_epochs))
             train_loss = 0.0
-            with tqdm(range(len(train_loader))) as t:
+            with tqdm(range(len(train_loader)), disable=not self.verbose) as t:
                 train_losses = []
                 for i, data in enumerate(train_loader, 0):
                     # transfer tensors to selected device
@@ -225,54 +218,112 @@ class MLPTrainer:
                     t.set_postfix(loss='{:05.3f}'.format(train_loss / (i + 1)))
                     t.update()
 
-            # evaluate the model on validation data after each epoch
-            # self.metric_values['train_loss'].append(np.mean(train_losses))
+
+def train_once(X, class_ratio, model_cls, n_epochs, lr, batch_size):
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    # Partition des données aléatoires à chaque itération
+    dataset = InstaCartDataset(X, test_ratio=0.5, class_ratio=class_ratio, batch_size=batch_size)
+    train_ldr, test_ldr = dataset.loaders()
+    # Entraînement
+    clf = model_cls(in_features=dataset.in_features - 1)
+    optimizer = optim.Adam(clf.parameters(), lr=lr)
+    trainer = MLPTrainer(model=clf, optimizer=optimizer, device=device, verbose=False)
+    trainer.train(train_ldr, n_epochs)
+    # Évaluation
+    y_true, y_pred = trainer.test(test_ldr)
+    return trainer.evaluate(y_true, y_pred)
 
 
-def main():
-    available_models = [MLP5, MLP3]
+def train(model_cls, lr, batch_size, n_epochs):
     df = pd.read_csv("./data/train_orders.csv")
     X = df.to_numpy()
     cls_0_ratio = (X[:, -1] == 0).sum() / len(X)
     cls_1_ratio = (X[:, -1] == 1).sum() / len(X)
     class_ratio = {0: cls_0_ratio, 1: cls_1_ratio}
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    n_epochs = 200
     n_runs = 10
 
-    available_metrics = ["Precision", "Recall", "F1-Score"]
-    results = {model.name: {metric_name: [] for metric_name in available_metrics} for model in available_models}
+    results = {metric_name: [] for metric_name in available_metrics}
 
-    for model_cls in available_models:
-        for run in range(n_runs):
-            # Partition des données aléatoires à chaque itération
-            dataset = InstaCartDataset(X, test_ratio=0.5, class_ratio=class_ratio)
-            train_ldr, test_ldr = dataset.loaders()
-            # Entraînement
-            model = model_cls(in_features=dataset.in_features-1)
-            optimizer = optim.Adam(model.parameters(), lr=1e-3)
-            trainer = MLPTrainer(model=model, optimizer=optimizer, device=device)
-            trainer.train(train_ldr, n_epochs)
-            # Évaluation
-            y_true, y_pred = trainer.test(test_ldr)
-            run_results = trainer.evaluate(y_true, y_pred)
-            print("Results for %s" % model_cls.name)
-            print(run_results)
-            for metric_name in available_metrics:
-                results[model_cls.name][metric_name].append(run_results[metric_name])
+    print("Training model {} with parameters {} on {} runs".format(model_cls.name,
+                                                                   "lr={}, batch_size={}".format(lr, batch_size),
+                                                                   n_runs))
+    for run in range(n_runs):
+        run_results = train_once(X, class_ratio, model_cls, n_epochs, lr, batch_size)
+        for metric_name in available_metrics:
+            results[metric_name].append(run_results[metric_name])
 
-    full_results = []
-    for model_results in results.values():
-        full_results.append(["{:2.4f} ({:2.4f})".format(np.mean(res), np.std(res)) for res in model_results.values()])
+    return results
 
-    summary_df = pd.DataFrame(
-        full_results,
-        columns=available_metrics,
-        index=[model.name for model in available_models]
-    )
-    summary_df.to_csv("results/instacart_results.csv")
-    print(summary_df)
+
+def dict_product(dicts):
+    # TODO cité la source
+    return (dict(zip(dicts, x)) for x in it.product(*dicts.values()))
+
+
+def hyperparameter_search(model_cls, n_epochs):
+    tunable_params = deque(dict_product({"lr": [1e-3, 5e-2, 1e-2], "batch_size": [32, 64, 128]}))
+
+    df = pd.read_csv("./data/train_orders.csv")
+    X = df.to_numpy()
+
+    best_params = {}
+    best_score = -np.inf
+
+    print("Tuning model {}".format(model_cls.name))
+
+    while tunable_params:
+        p = tunable_params.popleft()
+        print("... Testing parameters {}".format(p))
+        results = train_once(
+            X=X,
+            class_ratio=None,
+            model_cls=model_cls,
+            n_epochs=n_epochs,
+            lr=p.get("lr"), batch_size=p.get("batch_size")
+        )
+        f1 = results["F1-Score"]
+        print("... got F1-Score={:2.4f}".format(f1))
+        if f1 > best_score:
+            best_score = f1
+            best_params = p
+
+    return best_score, best_params
 
 
 if __name__ == "__main__":
-    main()
+    available_models = [MLP5, MLP3, MLP2]
+    available_metrics = ["Precision", "Recall", "F1-Score"]
+
+    all_results = {}
+
+    for model_class in available_models:
+        # Recherche d'hyperparamètres
+        _, optim_params = hyperparameter_search(model_cls=model_class, n_epochs=10)
+        # Entraînement sur les paramètres optimaux trouvés
+        model_res = train(
+            model_cls=model_class,
+            lr=optim_params["lr"],
+            batch_size=optim_params["batch_size"],
+            n_epochs=100,
+        )
+        # Sauvegarde les résultats et les hyper-paramètres
+        all_results[model_class.name] = {"Results": model_res, "Params": optim_params}
+
+    # Conversion des résultats en texte pour affichage et stockage
+    text_results = []
+    for model_results in all_results.values():
+        text_results.append(
+            ["{:2.4f} ({:2.4f})".format(np.mean(res), np.std(res)) for res in model_results["Results"].values()]
+            + ["{:2.4f}".format(p) for p in model_results["Params"].values()]
+        )
+    summary_df = pd.DataFrame(
+        text_results,
+        columns=available_metrics + ["lr", "batch_size"],
+        index=[model.name for model in available_models]
+    )
+    print(summary_df)
+    # Sauvegarde des résultats
+    now_str = dt.now().strftime("%Y-%m-%d_%H-%H-%M-%S")
+    os.mkdir("results/{}".format(now_str))
+    summary_df.to_csv("results/{}/instacart_results.csv".format(now_str))
