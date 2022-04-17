@@ -1,4 +1,5 @@
 import numpy as np
+import sklearn.model_selection
 import torch
 from torch import nn, optim
 from tqdm import tqdm
@@ -112,14 +113,16 @@ class MLPTrainer:
             for row in dataset:
                 X, y = row
                 X, y = X.to(self.device).float(), y.float()
+                # X = row[:, :-1].to(self.device, dtype=torch.float).float()
+                # y = row[:, -1].to(self.device, dtype=torch.long).float()
 
                 logits = self.model(X)
                 scores = torch.sigmoid(logits)
                 # logits / (logits + torch.abs(logits))
-                scores[scores >= 0.5] = 1
-                scores[scores < 0.5] = 0
+                scores[scores >= 0.6] = 1
+                scores[scores < 0.4] = 0
                 y_true.extend(y.tolist())
-                y_pred.extend(scores.cpu().tolist())
+                y_pred.extend(scores.cpu().squeeze(1).tolist())
         return y_true, y_pred
 
     def train(self, dataset_ldr, num_epochs):
@@ -137,6 +140,8 @@ class MLPTrainer:
                     # transfer tensors to selected device
                     train_inputs = row[0].to(self.device, dtype=torch.float).float()
                     train_labels = row[1].to(self.device, dtype=torch.long).float()
+                    # train_inputs = row[:, :-1].to(self.device, dtype=torch.float).float()
+                    # train_labels = row[:, -1].to(self.device, dtype=torch.long).float()
                     # zero the parameter gradients
                     self.optimizer.zero_grad()
 
@@ -179,7 +184,7 @@ class InstaCartDataset(Dataset):
     def __getitem__(self, index) -> T_co:
         return self.X[index], self.y[index]
 
-    def loaders(self, num_workers: int = 4) -> Tuple[DataLoader, DataLoader]:
+    def loaders(self, num_workers: int = 0) -> Tuple[DataLoader, DataLoader]:
         train_set, test_set = self.train_test_split(self.test_ratio)
         train_ldr = DataLoader(dataset=train_set, batch_size=self.batch_size, num_workers=num_workers)
         test_ldr = DataLoader(dataset=test_set, batch_size=self.batch_size, num_workers=num_workers)
@@ -188,6 +193,16 @@ class InstaCartDataset(Dataset):
     def train_test_split(self, test_ratio: float):
         train_ratio = 1 - test_ratio
         train_idx, test_idx = [], []
+
+        # X_train, X_test, y_train, y_test = sklearn.model_selection.train_test_split(self.X, self.y, test_size=test_ratio)
+        # train_set = np.concatenate(
+        #     (X_train, np.expand_dims(y_train, 1)),
+        #     axis=1
+        # )
+        # test_set = np.concatenate(
+        #     (X_test, np.expand_dims(y_test, 1)),
+        #     axis=1
+        # )
 
         if self.class_ratio:
             for label, ratio in self.class_ratio.items():
@@ -217,9 +232,9 @@ def main():
     X = df.to_numpy()
     cls_0_ratio = (X[:, -1] == 0).sum() / len(X)
     cls_1_ratio = (X[:, -1] == 1).sum() / len(X)
-    class_ratio = None # {0: cls_0_ratio, 1: cls_1_ratio}
+    class_ratio = {0: cls_0_ratio, 1: cls_1_ratio}
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    n_epochs = 1
+    n_epochs = 10
     n_runs = 1
 
     available_metrics = ["Precision", "Recall", "F1-Score"]
@@ -228,7 +243,7 @@ def main():
     for model_cls in available_models:
         for run in range(n_runs):
             # Partition des données aléatoires à chaque itération
-            dataset = InstaCartDataset(X, class_ratio=class_ratio)
+            dataset = InstaCartDataset(X, test_ratio=0.5, class_ratio=class_ratio)
             train_ldr, test_ldr = dataset.loaders()
             # Entraînement
             model = model_cls(in_features=dataset.in_features)
@@ -248,7 +263,7 @@ def main():
         full_results.append(["{:2.4f} ({:2.4f})".format(np.mean(res), np.std(res)) for res in model_results.values()])
 
     summary_df = pd.DataFrame(
-        results,
+        full_results,
         columns=available_metrics,
         index=[model.name for model in available_models]
     )
