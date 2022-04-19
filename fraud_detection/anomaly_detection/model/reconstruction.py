@@ -1,8 +1,8 @@
 import numpy as np
 import torch
-from base import BaseModel
-from GMM import GMM
-from memory_module import MemoryUnit
+from anomaly_detection.model.base import BaseModel
+from anomaly_detection.model.GMM import GMM
+from anomaly_detection.model.memory_module import MemoryUnit
 from torch import nn
 from typing import Tuple, List
 

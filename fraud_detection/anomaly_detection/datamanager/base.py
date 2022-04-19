@@ -5,11 +5,11 @@ from abc import abstractmethod
 from torch.utils.data import Dataset, Subset, DataLoader
 from torch.utils.data.dataset import T_co
 from typing import Tuple
-import scipy.io as scio
+import pandas as pd
 
 
 class AbstractDataset(Dataset):
-    def __init__(self, path: str, pct: float = 1.0, **kwargs):
+    def __init__(self, path: str, **kwargs):
         self.name = None
         X = self._load_data(path)
         anomaly_label = self.get_anomaly_label()
@@ -29,13 +29,17 @@ class AbstractDataset(Dataset):
 
     def _load_data(self, path: str):
         if path.endswith(".npz"):
-            return np.load(path)[self.npz_key()]
+            X = np.load(path)[self.npz_key()]
         elif path.endswith(".mat"):
             data = scipy.io.loadmat(path)
             X = np.concatenate((data['X'], data['y']), axis=1)
-            return X
+        elif path.endswith(".csv"):
+            df = pd.read_csv(path)
+            X = df.to_numpy()
         else:
             raise RuntimeError(f"Could not open {path}. Dataset can only read .npz and .mat files.")
+        assert np.isnan(X).sum() == 0, "Found NaN values in data. Aborting"
+        return X
 
     @staticmethod
     def get_anomaly_label():

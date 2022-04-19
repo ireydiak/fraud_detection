@@ -1,6 +1,6 @@
 import argparse
-import anomaly_detection.bootstrap as bootstrap
-from anomaly_detection.bootstrap import available_datasets, available_models
+import bootstrap as bootstrap
+from bootstrap import available_models
 
 
 def argument_parser():
@@ -10,7 +10,7 @@ def argument_parser():
     parser = argparse.ArgumentParser(
         usage="\n python main.py"
               "-m [model] -d [dataset-path]"
-              " --dataset [dataset] -e [n_epochs]"
+              " -e [n_epochs]"
               " --n-runs [n_runs] --batch-size [batch_size]"
     )
     parser.add_argument(
@@ -31,12 +31,6 @@ def argument_parser():
         "--batch-size",
         type=int,
         help="The size of the training batch",
-        required = True
-    )
-    parser.add_argument(
-        '--dataset',
-        type=str,
-        choices=available_datasets,
         required=True
     )
     parser.add_argument(
@@ -66,18 +60,6 @@ def argument_parser():
         help="The learning rate"
     )
     parser.add_argument(
-        "--pct",
-        type=float,
-        default=1.0,
-        help="Percentage of original data to keep"
-    )
-    parser.add_argument(
-        "--rho",
-        type=float,
-        default=0.0,
-        help="Anomaly ratio within training set"
-    )
-    parser.add_argument(
         "--model-path",
         type=str,
         default="./",
@@ -98,11 +80,8 @@ if __name__ == "__main__":
 
     bootstrap.train(
         model_name=args.model,
-        dataset_name=args.dataset,
         dataset_path=args.dataset_path,
         batch_size=args.batch_size,
-        pct=args.pct,
-        corruption_ratio=args.rho,
         n_runs=args.n_runs,
         n_epochs=args.n_epochs,
         learning_rate=args.lr,
