@@ -61,9 +61,6 @@ class BaseTrainer(ABC):
                     X, _ = sample
                     X = X.to(self.device).float()
 
-                    if len(X) < self.batch_size:
-                        break
-
                     # Reset gradient
                     self.optimizer.zero_grad()
 
@@ -88,8 +85,6 @@ class BaseTrainer(ABC):
             for row in dataset:
                 X, y = row
                 X = X.to(self.device).float()
-                if len(X) < self.batch_size:
-                    break
                 score = self.score(X)
                 y_true.extend(y.cpu().tolist())
                 scores.extend(score.cpu().tolist())
@@ -107,17 +102,17 @@ class BaseTrainer(ABC):
     def predict(self, scores: np.array, thresh: float):
         return (scores >= thresh).astype(int)
 
-    def evaluate(self, combined_scores, y_test: np.array, test_scores: np.array, threshold: float, pos_label: int = 1) -> dict:
+    def evaluate(self, scores: np.array, y_true: np.array, threshold: float, pos_label: int = 1) -> dict:
         res = {"Precision": -1, "Recall": -1, "F1-Score": -1, "AUROC": -1, "AUPR": -1}
 
-        thresh = np.percentile(combined_scores, threshold)
-        y_pred = self.predict(test_scores, thresh)
+        thresh = np.percentile(scores, threshold)
+        y_pred = self.predict(scores, thresh)
         res["Precision"], res["Recall"], res["F1-Score"], _ = sk_metrics.precision_recall_fscore_support(
-            y_test, y_pred, average='binary', pos_label=pos_label
+            y_true, y_pred, average='binary', pos_label=pos_label
         )
 
-        res["AUROC"] = sk_metrics.roc_auc_score(y_test, test_scores)
-        res["AUPR"] = sk_metrics.average_precision_score(y_test, test_scores)
+        res["AUROC"] = sk_metrics.roc_auc_score(y_true, scores)
+        res["AUPR"] = sk_metrics.average_precision_score(y_true, scores)
         return res
 
 

@@ -1,7 +1,7 @@
 from torch.utils.data.dataloader import DataLoader
 import torch
 import numpy as np
-from trainer.base import BaseTrainer
+from anomaly_detection.trainer.base import BaseTrainer
 
 
 class DeepSVDDTrainer(BaseTrainer):

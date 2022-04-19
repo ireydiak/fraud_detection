@@ -1,9 +1,9 @@
 import torch
 import numpy as np
 from torch.utils.data.dataloader import DataLoader
-from base import BaseTrainer
 from torch import nn
-from loss.EntropyLoss import EntropyLoss
+from anomaly_detection.loss.EntropyLoss import EntropyLoss
+from anomaly_detection.trainer.base import BaseTrainer
 
 
 class AutoEncoderTrainer(BaseTrainer):
