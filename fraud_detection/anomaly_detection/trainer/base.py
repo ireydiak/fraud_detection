@@ -102,18 +102,21 @@ class BaseTrainer(ABC):
     def predict(self, scores: np.array, thresh: float):
         return (scores >= thresh).astype(int)
 
-    def evaluate(self, scores: np.array, y_true: np.array, threshold: float, pos_label: int = 1) -> dict:
-        res = {"Precision": -1, "Recall": -1, "F1-Score": -1, "AUROC": -1, "AUPR": -1}
-
+    def evaluate(self, scores: np.array, y_true: np.array, test_scores, threshold: float, pos_label: int = 1) -> dict:
         thresh = np.percentile(scores, threshold)
-        y_pred = self.predict(scores, thresh)
-        res["Precision"], res["Recall"], res["F1-Score"], _ = sk_metrics.precision_recall_fscore_support(
+        y_pred = self.predict(test_scores, thresh)
+        precision, recall, f1, _ = sk_metrics.precision_recall_fscore_support(
             y_true, y_pred, average='binary', pos_label=pos_label
         )
-
-        res["AUROC"] = sk_metrics.roc_auc_score(y_true, scores)
-        res["AUPR"] = sk_metrics.average_precision_score(y_true, scores)
-        return res
+        auroc = sk_metrics.roc_auc_score(y_true, test_scores)
+        aupr = sk_metrics.average_precision_score(y_true, test_scores)
+        return {
+            "Precision": precision,
+            "Recall": recall,
+            "F1-Score": f1,
+            "AUROC": auroc,
+            "AUPR": aupr
+        }
 
 
 class BaseShallowTrainer(ABC):

@@ -122,7 +122,7 @@ def train_model(
             scores = np.concatenate((train_scores, test_scores), axis=0)
             print("Evaluating model")
             # scores: np.array, y_true: np.array,
-            results = model_trainer.evaluate(scores, y_true, thresh)
+            results = model_trainer.evaluate(scores, y_test_true, test_scores, thresh)
             for k, v in results.items():
                 all_results[k].append(v)
     else:
@@ -136,7 +136,8 @@ def train_model(
             y_test_true, test_scores = model_trainer.test(test_ldr)
             y_true = np.concatenate((y_train_true, y_test_true), axis=0)
             scores = np.concatenate((train_scores, test_scores), axis=0)
-            results = model_trainer.evaluate(scores, y_true, thresh)
+            #results = model_trainer.evaluate(scores, y_true, thresh)
+            results = model_trainer.evaluate(scores, y_test_true, test_scores, thresh)
             print(results)
             for k, v in results.items():
                 all_results[k].append(v)
