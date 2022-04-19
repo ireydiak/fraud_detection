@@ -12,7 +12,6 @@ from model.shallow import RecForest, OCSVM, LOF
 from trainer.one_class import DeepSVDDTrainer
 from trainer.reconstruction import AutoEncoderTrainer as AETrainer, DAGMMTrainer, MemAETrainer
 from trainer.shallow import OCSVMTrainer, RecForestTrainer, LOFTrainer
-from utils import metrics
 from utils.utils import average_results
 from datamanager.base import AbstractDataset
 from datamanager.dataset import IEEEFraudDetection
@@ -116,13 +115,9 @@ def train_model(
             model_trainer.model = model
             print("Evaluating the model on test set")
             # We test with the minority samples as the positive class
-            y_train_true, train_scores = model_trainer.test(train_ldr)
             y_test_true, test_scores = model_trainer.test(test_ldr)
-            y_true = np.concatenate((y_train_true, y_test_true), axis=0)
-            scores = np.concatenate((train_scores, test_scores), axis=0)
             print("Evaluating model")
-            # scores: np.array, y_true: np.array,
-            results = model_trainer.evaluate(scores, y_test_true, test_scores, thresh)
+            results = model_trainer.evaluate(test_scores, y_test_true)
             for k, v in results.items():
                 all_results[k].append(v)
     else:
@@ -132,12 +127,8 @@ def train_model(
             print("Finished learning process")
             print("Evaluating model on test set")
             # We test with the minority samples as the positive class
-            y_train_true, train_scores = model_trainer.test(train_ldr)
             y_test_true, test_scores = model_trainer.test(test_ldr)
-            y_true = np.concatenate((y_train_true, y_test_true), axis=0)
-            scores = np.concatenate((train_scores, test_scores), axis=0)
-            #results = model_trainer.evaluate(scores, y_true, thresh)
-            results = model_trainer.evaluate(scores, y_test_true, test_scores, thresh)
+            results = model_trainer.evaluate(test_scores, y_test_true)
             print(results)
             for k, v in results.items():
                 all_results[k].append(v)
@@ -162,7 +153,7 @@ def train(
 ):
     # Dynamically load the Dataset instance
     dataset = IEEEFraudDetection(dataset_path)
-    anomaly_thresh = 1 - dataset.anomaly_ratio
+    anomaly_thresh = int(np.ceil((1 - dataset.anomaly_ratio) * 100))
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     # split data in train and test sets
