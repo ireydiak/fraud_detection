@@ -1,7 +1,7 @@
 import torch
 
 from torch.utils.data import DataLoader
-from trainer.base import BaseShallowTrainer
+from anomaly_detection.trainer.base import BaseShallowTrainer
 
 
 class RecForestTrainer(BaseShallowTrainer):

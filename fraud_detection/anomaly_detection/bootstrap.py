@@ -5,17 +5,16 @@ from collections import defaultdict
 from datetime import datetime as dt
 
 from torch.utils.data import DataLoader
-from anomaly_detection.model.base import BaseModel
-from anomaly_detection.model.one_class import DeepSVDD
-from anomaly_detection.model.reconstruction import AutoEncoder as AE, DAGMM, MemAutoEncoder as MemAE
-from anomaly_detection.model.shallow import RecForest, OCSVM, LOF
-from anomaly_detection.trainer.one_class import DeepSVDDTrainer
-from anomaly_detection.trainer.reconstruction import AutoEncoderTrainer as AETrainer, DAGMMTrainer, MemAETrainer
-from anomaly_detection.trainer.shallow import OCSVMTrainer, RecForestTrainer, LOFTrainer
-from anomaly_detection.utils import metrics
-from anomaly_detection.utils.utils import average_results
-from anomaly_detection.datamanager.dataset import AbstractDataset
-from anomaly_detection.datamanager.dataset import IEEEFraudDetection
+from model.base import BaseModel
+from model.one_class import DeepSVDD
+from model.reconstruction import AutoEncoder as AE, DAGMM, MemAutoEncoder as MemAE
+from model.shallow import RecForest, OCSVM, LOF
+from trainer.one_class import DeepSVDDTrainer
+from trainer.reconstruction import AutoEncoderTrainer as AETrainer, DAGMMTrainer, MemAETrainer
+from trainer.shallow import OCSVMTrainer, RecForestTrainer, LOFTrainer
+from utils.utils import average_results
+from datamanager.base import AbstractDataset
+from datamanager.dataset import IEEEFraudDetection
 
 available_models = [
     "AE",
@@ -25,7 +24,6 @@ available_models = [
     "MemAE",
     "NeuTraLAD"
     "OC-SVM",
-    "RecForest",
 ]
 available_datasets = [
     "IEEEFraudDetection",
@@ -33,10 +31,10 @@ available_datasets = [
 
 
 def store_results(results: dict, params: dict, model_name: str, dataset: str, dataset_path: str, results_path: str = None):
-    output_dir = results_path or f"../results/{dataset}"
+    output_dir = results_path or f"./results/{dataset}"
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
-    fname = output_dir + '/' + f'{model_name}_results.txt'
+    fname = output_dir + f'/{model_name}_results.txt'
     with open(fname, 'a') as f:
         hdr = "Experiments on {}\n".format(dt.now().strftime("%d/%m/%Y %H:%M:%S"))
         f.write(hdr)
@@ -101,7 +99,6 @@ def train_model(
         model_trainer,
         train_ldr: DataLoader,
         test_ldr: DataLoader,
-        dataset_name: str,
         n_runs: int,
         thresh: float,
         device: str,
@@ -118,12 +115,9 @@ def train_model(
             model_trainer.model = model
             print("Evaluating the model on test set")
             # We test with the minority samples as the positive class
-            y_train_true, train_scores = model_trainer.test(train_ldr)
             y_test_true, test_scores = model_trainer.test(test_ldr)
-            y_true = np.concatenate((y_train_true, y_test_true), axis=0)
-            scores = np.concatenate((train_scores, test_scores), axis=0)
             print("Evaluating model")
-            results = metrics.evaluate(scores, test_scores, y_true, thresh)
+            results = model_trainer.evaluate(test_scores, y_test_true)
             for k, v in results.items():
                 all_results[k].append(v)
     else:
@@ -133,15 +127,12 @@ def train_model(
             print("Finished learning process")
             print("Evaluating model on test set")
             # We test with the minority samples as the positive class
-            y_train_true, train_scores = model_trainer.test(train_ldr)
             y_test_true, test_scores = model_trainer.test(test_ldr)
-            y_true = np.concatenate((y_train_true, y_test_true), axis=0)
-            scores = np.concatenate((train_scores, test_scores), axis=0)
-            results = metrics.estimate_optimal_threshold(scores, test_scores, y_true, thresh)
+            results = model_trainer.evaluate(test_scores, y_test_true)
             print(results)
             for k, v in results.items():
                 all_results[k].append(v)
-            store_model(model, model.name, dataset_name, model_path)
+            store_model(model, model.name, "IEEEFraudDetection", model_path)
             model.reset()
 
     # Compute mean and standard deviation of the performance metrics
@@ -151,11 +142,8 @@ def train_model(
 
 def train(
         model_name: str,
-        dataset_name: str,
         dataset_path: str,
         batch_size: int,
-        pct: float,
-        corruption_ratio: float,
         n_runs: int,
         n_epochs: int,
         learning_rate: float,
@@ -164,9 +152,8 @@ def train(
         test_mode: bool
 ):
     # Dynamically load the Dataset instance
-    clsname = globals()[f'{dataset_name}Dataset']
-    dataset = clsname(path=dataset_path, pct=pct)
-    anomaly_thresh = 1 - dataset.anomaly_ratio
+    dataset = IEEEFraudDetection(dataset_path)
+    anomaly_thresh = int(np.ceil((1 - dataset.anomaly_ratio) * 100))
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     # split data in train and test sets
@@ -191,7 +178,6 @@ def train(
         model_trainer=model_trainer,
         train_ldr=train_ldr,
         test_ldr=test_ldr,
-        dataset_name=dataset_name,
         n_runs=n_runs,
         device=device,
         thresh=anomaly_thresh,
@@ -200,8 +186,7 @@ def train(
     )
     print(res)
     params = dict(
-        {"BatchSize": batch_size, "Epochs": n_epochs, "CorruptionRatio": corruption_ratio,
-         "Threshold": anomaly_thresh},
+        {"BatchSize": batch_size, "Epochs": n_epochs, "Threshold": anomaly_thresh},
         **model.get_params()
     )
     # Store the average of results

@@ -1,7 +1,7 @@
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.svm import OneClassSVM
 from recforest import RecForest as PyPiRecForest
-from model.base import BaseShallowModel
+from anomaly_detection.model.base import BaseShallowModel
 
 
 class RecForest(BaseShallowModel):

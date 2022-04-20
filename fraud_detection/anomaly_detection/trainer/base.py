@@ -61,9 +61,6 @@ class BaseTrainer(ABC):
                     X, _ = sample
                     X = X.to(self.device).float()
 
-                    if len(X) < self.batch_size:
-                        break
-
                     # Reset gradient
                     self.optimizer.zero_grad()
 
@@ -88,8 +85,6 @@ class BaseTrainer(ABC):
             for row in dataset:
                 X, y = row
                 X = X.to(self.device).float()
-                if len(X) < self.batch_size:
-                    break
                 score = self.score(X)
                 y_true.extend(y.cpu().tolist())
                 scores.extend(score.cpu().tolist())
@@ -107,18 +102,50 @@ class BaseTrainer(ABC):
     def predict(self, scores: np.array, thresh: float):
         return (scores >= thresh).astype(int)
 
-    def evaluate(self, combined_scores, y_test: np.array, test_scores: np.array, threshold: float, pos_label: int = 1) -> dict:
-        res = {"Precision": -1, "Recall": -1, "F1-Score": -1, "AUROC": -1, "AUPR": -1}
+    def evaluate(self, scores, y_true, pos_label=1, nq=100):
+        ratio = 100 * sum(y_true == 0) / len(y_true)
+        q = np.linspace(ratio - 5, min(ratio + 5, 100), nq)
+        thresholds = np.percentile(scores, q)
 
-        thresh = np.percentile(combined_scores, threshold)
-        y_pred = self.predict(test_scores, thresh)
-        res["Precision"], res["Recall"], res["F1-Score"], _ = sk_metrics.precision_recall_fscore_support(
-            y_test, y_pred, average='binary', pos_label=pos_label
-        )
+        result_search = []
+        confusion_matrices = []
+        f1 = np.zeros(shape=nq)
+        r = np.zeros(shape=nq)
+        p = np.zeros(shape=nq)
+        auc = np.zeros(shape=nq)
+        aupr = np.zeros(shape=nq)
 
-        res["AUROC"] = sk_metrics.roc_auc_score(y_test, test_scores)
-        res["AUPR"] = sk_metrics.average_precision_score(y_test, test_scores)
-        return res
+        for i, (thresh, qi) in enumerate(zip(thresholds, q)):
+            # print(f"Threshold :{thresh:.3f}--> {qi:.3f}")
+            # Prediction using the threshold value
+            y_pred = (scores >= thresh).astype(int)
+            y_true = y_true.astype(int)
+
+            accuracy = sk_metrics.accuracy_score(y_true, y_pred)
+            precision, recall, f_score, _ = sk_metrics.precision_recall_fscore_support(
+                y_true, y_pred, average="binary", pos_label=pos_label
+            )
+            avgpr = sk_metrics.average_precision_score(y_true, scores)
+            roc = sk_metrics.roc_auc_score(y_true, scores)
+            cm = sk_metrics.confusion_matrix(y_true, y_pred, labels=[1, 0])
+            confusion_matrices.append(cm)
+            result_search.append([accuracy, precision, recall, f_score])
+            f1[i] = f_score
+            r[i] = recall
+            p[i] = precision
+            auc[i] = roc
+            aupr[i] = avgpr
+
+        arm = np.argmax(f1)
+
+        return {
+            "Precision": p[arm],
+            "Recall": r[arm],
+            "F1-Score": f1[arm],
+            "AUPR": aupr[arm],
+            "AUROC": auc[arm],
+            "Thresh_star": thresholds[arm]
+        }
 
 
 class BaseShallowTrainer(ABC):

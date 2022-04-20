@@ -1,8 +1,8 @@
 import numpy as np
 import torch
-from base import BaseModel
-from GMM import GMM
-from memory_module import MemoryUnit
+from anomaly_detection.model.base import BaseModel
+from anomaly_detection.model.GMM import GMM
+from anomaly_detection.model.memory_module import MemoryUnit
 from torch import nn
 from typing import Tuple, List
 
@@ -284,7 +284,7 @@ class DAGMM(BaseModel):
         mu_z = z.unsqueeze(1) - mu.unsqueeze(0)
 
         # scaler
-        inv_cov_mat = torch.cholesky_inverse(torch.cholesky(cov_mat))
+        inv_cov_mat = torch.cholesky_inverse(torch.linalg.cholesky(cov_mat))
         # inv_cov_mat = torch.linalg.inv(cov_mat)
         det_cov_mat = torch.linalg.cholesky(2 * np.pi * cov_mat)
         det_cov_mat = torch.diagonal(det_cov_mat, dim1=1, dim2=2)

@@ -8,7 +8,7 @@ from torch import optim
 from torch.nn import Parameter
 from torch.utils.data import DataLoader
 from sklearn import metrics
-from trainer.base import BaseTrainer
+from anomaly_detection.trainer.base import BaseTrainer
 
 
 class DSEBMTrainer(BaseTrainer):

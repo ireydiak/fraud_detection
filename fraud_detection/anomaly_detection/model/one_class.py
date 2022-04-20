@@ -1,6 +1,6 @@
 import torch.nn as nn
 from torch import Tensor
-from model.base import BaseModel
+from anomaly_detection.model.base import BaseModel
 
 
 class DeepSVDD(BaseModel):
