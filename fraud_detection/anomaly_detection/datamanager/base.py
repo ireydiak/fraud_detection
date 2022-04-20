@@ -36,6 +36,8 @@ class AbstractDataset(Dataset):
         elif path.endswith(".csv"):
             df = pd.read_csv(path)
             X = df.to_numpy()
+        elif path.endswith(".npy"):
+            X = np.load(path)
         else:
             raise RuntimeError(f"Could not open {path}. Dataset can only read .npz and .mat files.")
         assert np.isnan(X).sum() == 0, "Found NaN values in data. Aborting"
