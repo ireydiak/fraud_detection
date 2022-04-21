@@ -7,11 +7,11 @@ from datetime import datetime as dt
 from torch.utils.data import DataLoader
 from anomaly_detection.model.base import BaseModel
 from anomaly_detection.model.one_class import DeepSVDD
-from anomaly_detection.model.reconstruction import AutoEncoder as AE, DAGMM, MemAutoEncoder as MemAE
-from anomaly_detection.model.shallow import RecForest, OCSVM, LOF
+from anomaly_detection.model.reconstruction import AutoEncoder as AE, DAGMM
+from anomaly_detection.model.shallow import OCSVM
 from anomaly_detection.trainer.one_class import DeepSVDDTrainer
-from anomaly_detection.trainer.reconstruction import AutoEncoderTrainer as AETrainer, DAGMMTrainer, MemAETrainer
-from anomaly_detection.trainer.shallow import OCSVMTrainer, RecForestTrainer, LOFTrainer
+from anomaly_detection.trainer.reconstruction import AutoEncoderTrainer as AETrainer, DAGMMTrainer
+from anomaly_detection.trainer.shallow import OCSVMTrainer
 from anomaly_detection.utils.utils import average_results
 from anomaly_detection.datamanager.base import AbstractDataset
 from anomaly_detection.datamanager.dataset import IEEEFraudDetection
@@ -53,12 +53,9 @@ model_trainer_map = {
     # Deep Models
     "AE": (AE, AETrainer),
     "DAGMM": (DAGMM, DAGMMTrainer),
-    "MemAE": (MemAE, MemAETrainer),
     "DeepSVDD": (DeepSVDD, DeepSVDDTrainer),
     # Shallow Models
     "OC-SVM": (OCSVM, OCSVMTrainer),
-    "LOF": (LOF, LOFTrainer),
-    "RecForest": (RecForest, RecForestTrainer)
 }
 
 
