@@ -5,24 +5,20 @@ from collections import defaultdict
 from datetime import datetime as dt
 
 from torch.utils.data import DataLoader
-from model.base import BaseModel
-from model.one_class import DeepSVDD
-from model.reconstruction import AutoEncoder as AE, DAGMM, MemAutoEncoder as MemAE
-from model.shallow import RecForest, OCSVM, LOF
-from trainer.one_class import DeepSVDDTrainer
-from trainer.reconstruction import AutoEncoderTrainer as AETrainer, DAGMMTrainer, MemAETrainer
-from trainer.shallow import OCSVMTrainer, RecForestTrainer, LOFTrainer
-from utils.utils import average_results
-from datamanager.base import AbstractDataset
-from datamanager.dataset import IEEEFraudDetection
+from anomaly_detection.model.base import BaseModel
+from anomaly_detection.model.one_class import DeepSVDD
+from anomaly_detection.model.reconstruction import AutoEncoder as AE, DAGMM, MemAutoEncoder as MemAE
+from anomaly_detection.model.shallow import RecForest, OCSVM, LOF
+from anomaly_detection.trainer.one_class import DeepSVDDTrainer
+from anomaly_detection.trainer.reconstruction import AutoEncoderTrainer as AETrainer, DAGMMTrainer, MemAETrainer
+from anomaly_detection.trainer.shallow import OCSVMTrainer, RecForestTrainer, LOFTrainer
+from anomaly_detection.utils.utils import average_results
+from anomaly_detection.datamanager.base import AbstractDataset
+from anomaly_detection.datamanager.dataset import IEEEFraudDetection
 
 available_models = [
-    "AE",
     "DAGMM",
     "DeepSVDD",
-    "LOF",
-    "MemAE",
-    "NeuTraLAD"
     "OC-SVM",
 ]
 available_datasets = [
@@ -151,6 +147,7 @@ def train(
         models_path: str,
         test_mode: bool
 ):
+    print("Training model %s for %d runs of %d epochs each" % (model_name, n_runs, n_epochs))
     # Dynamically load the Dataset instance
     dataset = IEEEFraudDetection(dataset_path)
     anomaly_thresh = int(np.ceil((1 - dataset.anomaly_ratio) * 100))

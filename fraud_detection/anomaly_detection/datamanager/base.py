@@ -15,7 +15,7 @@ class AbstractDataset(Dataset):
         anomaly_label = self.get_anomaly_label()
 
         self.X = X[:, :-1]
-        self.y = X[:, -1]
+        self.y = X[:, -1].astype(np.uint8)
 
         self.anomaly_ratio = (X[:, -1] == anomaly_label).sum() / len(X)
         self.n_instances = self.X.shape[0]
@@ -29,7 +29,10 @@ class AbstractDataset(Dataset):
 
     def _load_data(self, path: str):
         if path.endswith(".npz"):
-            X = np.load(path)[self.npz_key()]
+            if self.npz_key() is not None:
+                X = np.load(path)[self.npz_key()]
+            else:
+                X = np.load(path)
         elif path.endswith(".mat"):
             data = scipy.io.loadmat(path)
             X = np.concatenate((data['X'], data['y']), axis=1)
@@ -53,7 +56,7 @@ class AbstractDataset(Dataset):
 
     @abstractmethod
     def npz_key(self):
-        pass
+        return None
 
     def n_features(self):
         return self.X.shape[1]

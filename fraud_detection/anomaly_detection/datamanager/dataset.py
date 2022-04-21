@@ -7,4 +7,4 @@ class IEEEFraudDetection(AbstractDataset):
         self.name = "IEEEFraudDetection"
 
     def npz_key(self):
-        return "fraud_detection"
+        return None
