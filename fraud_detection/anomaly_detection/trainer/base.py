@@ -16,7 +16,8 @@ class BaseTrainer(ABC):
                  lr: float = 1e-4,
                  n_epochs: int = 200,
                  n_jobs_dataloader: int = 0,
-                 device: str = "cuda"):
+                 device: str = "cuda",
+                 verbose=False):
         self.device = device
         self.model = model.to(device)
         self.batch_size = batch_size
@@ -24,6 +25,7 @@ class BaseTrainer(ABC):
         self.n_epochs = n_epochs
         self.lr = lr
         self.optimizer = self.set_optimizer()
+        self.verbose = verbose
 
     @abstractmethod
     def train_iter(self, sample: torch.Tensor):
@@ -56,26 +58,22 @@ class BaseTrainer(ABC):
         print("Started training")
         for epoch in range(self.n_epochs):
             epoch_loss = 0.0
-            with trange(len(dataset)) as t:
-                for sample in dataset:
-                    X, _ = sample
-                    X = X.to(self.device).float()
+            for sample in dataset:
+                X, _ = sample
+                X = X.to(self.device).float()
 
-                    # Reset gradient
-                    self.optimizer.zero_grad()
+                # Reset gradient
+                self.optimizer.zero_grad()
 
-                    loss = self.train_iter(X)
+                loss = self.train_iter(X)
 
-                    # Backpropagation
-                    loss.backward()
-                    self.optimizer.step()
+                # Backpropagation
+                loss.backward()
+                self.optimizer.step()
 
-                    epoch_loss += loss.item()
-                    t.set_postfix(
-                        loss='{:05.3f}'.format(epoch_loss),
-                        epoch=epoch + 1
-                    )
-                    t.update()
+                epoch_loss += loss.item()
+                if self.verbose:
+                    print("Epoch {}: loss: {:05.3f}".format(epoch + 1, epoch_loss))
         self.after_training()
 
     def test(self, dataset: DataLoader) -> Union[np.array, np.array]:
