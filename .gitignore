@@ -1,7 +1,4 @@
-.vscode/
+data/*.npy
+models/*.pt
 .idea/
-catboost_info/
-__pycache__/
-/**/.vscode/
-/**/.idea/
-/**/__pycache__/
+.vscode
