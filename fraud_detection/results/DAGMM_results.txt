@@ -1,0 +1,132 @@
+Experiments on 20/04/2022 19:46:35
+----------------------------------
+IEEEFraudDetection (fraud-detection-v4)
+BatchSize=128, Epochs=1, Threshold=50, lambda_1=0.005, lambda_2=0.1, latent_dim=1, K=4
+Precision: 0.6638(0.0000)
+Recall: 0.7136(0.0000)
+F1-Score: 0.6878(0.0000)
+AUPR: 0.6884(0.0000)
+AUROC: 0.5229(0.0000)
+Thresh_star: -18.9242(0.0000)
+----------------------------------
+Experiments on 20/04/2022 19:51:47
+----------------------------------
+IEEEFraudDetection (fraud-detection-v3)
+BatchSize=128, Epochs=1, Threshold=90, lambda_1=0.005, lambda_2=0.1, latent_dim=1, K=4
+Precision: 0.4568(0.0000)
+Recall: 0.5810(0.0000)
+F1-Score: 0.5115(0.0000)
+AUPR: 0.4841(0.0000)
+AUROC: 0.8590(0.0000)
+Thresh_star: -3.4703(0.0000)
+----------------------------------
+Experiments on 20/04/2022 20:05:02
+----------------------------------
+IEEEFraudDetection (fraud-detection-v2)
+BatchSize=128, Epochs=1, Threshold=50, lambda_1=0.005, lambda_2=0.1, latent_dim=1, K=4
+Precision: 0.6698(0.0000)
+Recall: 0.7200(0.0000)
+F1-Score: 0.6940(0.0000)
+AUPR: 0.7010(0.0000)
+AUROC: 0.5236(0.0000)
+Thresh_star: -6.5270(0.0000)
+----------------------------------
+Experiments on 20/04/2022 21:13:01
+----------------------------------
+IEEEFraudDetection (fraud-detection-v1)
+BatchSize=128, Epochs=1, Threshold=50, lambda_1=0.005, lambda_2=0.1, latent_dim=1, K=4
+Precision: 0.7167(0.0000)
+Recall: 0.7704(0.0000)
+F1-Score: 0.7426(0.0000)
+AUPR: 0.7309(0.0000)
+AUROC: 0.6181(0.0000)
+Thresh_star: -4.2037(0.0000)
+----------------------------------
+Experiments on 20/04/2022 21:13:08
+----------------------------------
+IEEEFraudDetection (fraud-detection-v2)
+BatchSize=128, Epochs=1, Threshold=50, lambda_1=0.005, lambda_2=0.1, latent_dim=1, K=4
+Precision: 0.6698(0.0000)
+Recall: 0.7200(0.0000)
+F1-Score: 0.6940(0.0000)
+AUPR: 0.7010(0.0000)
+AUROC: 0.5236(0.0000)
+Thresh_star: -6.5270(0.0000)
+----------------------------------
+Experiments on 20/04/2022 21:14:36
+----------------------------------
+IEEEFraudDetection (fraud-detection-v3)
+BatchSize=128, Epochs=1, Threshold=35, lambda_1=0.005, lambda_2=0.1, latent_dim=1, K=4
+Precision: 0.8241(0.0000)
+Recall: 0.8763(0.0000)
+F1-Score: 0.8494(0.0000)
+AUPR: 0.8225(0.0000)
+AUROC: 0.6133(0.0000)
+Thresh_star: -4.4857(0.0000)
+----------------------------------
+Experiments on 20/04/2022 21:14:42
+----------------------------------
+IEEEFraudDetection (fraud-detection-v4)
+BatchSize=128, Epochs=1, Threshold=50, lambda_1=0.005, lambda_2=0.1, latent_dim=1, K=4
+Precision: 0.6638(0.0000)
+Recall: 0.7136(0.0000)
+F1-Score: 0.6878(0.0000)
+AUPR: 0.6884(0.0000)
+AUROC: 0.5229(0.0000)
+Thresh_star: -18.9242(0.0000)
+----------------------------------
+Experiments on 20/04/2022 21:35:57
+----------------------------------
+IEEEFraudDetection (fraud-detection-v1)
+BatchSize=128, Epochs=200, Threshold=50, lambda_1=0.005, lambda_2=0.1, latent_dim=1, K=4
+Precision: 0.6792(0.0559)
+Recall: 0.7302(0.0601)
+F1-Score: 0.7038(0.0580)
+AUPR: 0.7151(0.0971)
+AUROC: 0.5431(0.1510)
+Thresh_star: -4.7012(4.3599)
+----------------------------------
+Experiments on 20/04/2022 22:05:25
+----------------------------------
+IEEEFraudDetection (fraud-detection-v1)
+BatchSize=128, Epochs=200, Threshold=50, lambda_1=0.005, lambda_2=0.1, latent_dim=1, K=4
+Precision: 0.6792(0.0559)
+Recall: 0.7302(0.0601)
+F1-Score: 0.7038(0.0580)
+AUPR: 0.7151(0.0971)
+AUROC: 0.5431(0.1510)
+Thresh_star: -4.7012(4.3599)
+----------------------------------
+Experiments on 20/04/2022 22:33:00
+----------------------------------
+IEEEFraudDetection (fraud-detection-v1)
+BatchSize=128, Epochs=200, Threshold=50, lambda_1=0.005, lambda_2=0.1, latent_dim=1, K=4
+Precision: 0.6792(0.0559)
+Recall: 0.7302(0.0601)
+F1-Score: 0.7038(0.0580)
+AUPR: 0.7151(0.0971)
+AUROC: 0.5431(0.1510)
+Thresh_star: -4.7012(4.3599)
+----------------------------------
+Experiments on 20/04/2022 22:56:17
+----------------------------------
+IEEEFraudDetection (fraud-detection-v2)
+BatchSize=128, Epochs=200, Threshold=50, lambda_1=0.005, lambda_2=0.1, latent_dim=1, K=4
+Precision: 0.6745(0.0066)
+Recall: 0.7251(0.0071)
+F1-Score: 0.6989(0.0068)
+AUPR: 0.6902(0.0234)
+AUROC: 0.5272(0.0226)
+Thresh_star: -5.2162(4.5608)
+----------------------------------
+Experiments on 21/04/2022 01:43:31
+----------------------------------
+IEEEFraudDetection (fraud-detection-v3)
+BatchSize=128, Epochs=200, Threshold=35, lambda_1=0.005, lambda_2=0.1, latent_dim=1, K=4
+Precision: 0.9465(0.0738)
+Recall: 0.9666(0.0538)
+F1-Score: 0.9563(0.0640)
+AUPR: 0.9627(0.0557)
+AUROC: 0.9073(0.1462)
+Thresh_star: 3.2005(9.5580)
+----------------------------------

@@ -115,10 +115,7 @@ def train_model(
                 all_results[k].append(v)
     else:
         for i in range(n_runs):
-            print(f"Run {i + 1} of {n_runs}")
             _ = model_trainer.train(train_ldr)
-            print("Finished learning process")
-            print("Evaluating model on test set")
             # We test with the minority samples as the positive class
             y_test_true, test_scores = model_trainer.test(test_ldr)
             results = model_trainer.evaluate(test_scores, y_test_true)

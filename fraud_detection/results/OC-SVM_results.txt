@@ -1,0 +1,22 @@
+Experiments on 20/04/2022 22:40:47
+----------------------------------
+IEEEFraudDetection (fraud-detection-v1)
+BatchSize=128, Epochs=1, Threshold=50, kernel=rbf, gamma=scale, shrinking=False, nu=0.5
+Precision: 0.6667(0.0000)
+Recall: 1.0000(0.0000)
+F1-Score: 0.8000(0.0000)
+AUPR: 0.7023(0.0000)
+AUROC: 0.5734(0.0000)
+Thresh_star: -1.0000(0.0000)
+----------------------------------
+Experiments on 20/04/2022 22:59:31
+----------------------------------
+IEEEFraudDetection (fraud-detection-v2)
+BatchSize=128, Epochs=1, Threshold=50, kernel=rbf, gamma=scale, shrinking=False, nu=0.5
+Precision: 0.6667(0.0000)
+Recall: 1.0000(0.0000)
+F1-Score: 0.8000(0.0000)
+AUPR: 0.7046(0.0000)
+AUROC: 0.5776(0.0000)
+Thresh_star: -1.0000(0.0000)
+----------------------------------
